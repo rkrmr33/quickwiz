@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
     <style>
         * {
             margin: 0;
@@ -423,6 +424,7 @@
         let totalQuestions = 0;
         let currentStreak = 0; // Track current user's streak
         let pollingInterval = null; // Interval for polling quiz state
+        let creatorId = null; // Store the quiz creator's ID
         
         // Sound effects
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -668,6 +670,7 @@
                             const participantDiv = document.createElement('div');
                             participantDiv.className = 'participant';
                             const isCurrentUser = participant.id === participantId;
+                            const isCreator = participant.id === data.creatorId;
                             
                             // Set the participant name for current user
                             if (isCurrentUser) {
@@ -680,7 +683,8 @@
                                 <div class="participant-avatar" style="background: ${color.bg}; color: ${color.text};">${initials}</div>
                                 <div class="participant-info">
                                     <span style="font-weight: bold;">${participant.name}</span>
-                                    ${participant.isSpectator ? '<span style="color: #ffd700;">👑 Host</span>' : ''}
+                                    ${isCreator ? '<span style="color: #ffd700;">👑 Host</span>' : ''}
+                                    ${participant.isSpectator ? '<span style="color: #666;">👓 Spectator</span>' : ''}
                                     ${isCurrentUser ? '<span style="color: #667eea;">(You)</span>' : ''}
                                     <span style="color: #51cf66;">✓ Ready</span>
                                 </div>
@@ -688,6 +692,9 @@
                             participantsList.appendChild(participantDiv);
                         });
                     }
+                    
+                    // Store creator ID globally
+                    creatorId = data.creatorId;
                     
                     // Show start button only for the creator (check against server creatorId)
                     if (data.creatorId === participantId) {
@@ -756,6 +763,7 @@
             const participantsList = document.getElementById('participants-list');
             const participantDiv = document.createElement('div');
             participantDiv.className = 'participant';
+            const isCreator = data.id === creatorId;
             const initials = getInitials(data.name);
             const color = getAvatarColor(data.id);
             
@@ -763,7 +771,8 @@
                 <div class="participant-avatar" style="background: ${color.bg}; color: ${color.text};">${initials}</div>
                 <div class="participant-info">
                     <span style="font-weight: bold;">${data.name}</span>
-                    ${data.is_spectator ? '<span style="color: #ffd700;">👑 Host</span>' : ''}
+                    ${isCreator ? '<span style="color: #ffd700;">👑 Host</span>' : ''}
+                    ${data.is_spectator ? '<span style="color: #666;">👓 Spectator</span>' : ''}
                     ${isCurrentUser ? '<span style="color: #667eea;">(You)</span>' : ''}
                     <span style="color: #51cf66;">✓ Joined</span>
                 </div>
@@ -931,11 +940,35 @@
             }
             
             const resultsList = document.getElementById('results-list');
-            resultsList.innerHTML = `
+            
+            // Find the fastest correct answer time under 3 seconds
+            let fastestTime = null;
+            let fastestPlayer = null;
+            data.participants.forEach(p => {
+                if (p.is_correct && p.answer_submission_time > 0 && p.answer_submission_time < 3.0) {
+                    if (fastestTime === null || p.answer_submission_time < fastestTime) {
+                        fastestTime = p.answer_submission_time;
+                        fastestPlayer = p.name;
+                    }
+                }
+            });
+            
+            // Build header with optional fastest time display
+            let headerHtml = `
                 <div style="text-align: center; margin-bottom: 30px;">
                     <h3 style="color: #51cf66; font-size: 2em;">✓ Correct Answer: ${data.correct_answer}</h3>
-                </div>
             `;
+            
+            if (fastestTime !== null && fastestPlayer !== null) {
+                headerHtml += `
+                    <div style="color: #4caf50; font-size: 1.2em; margin-top: 10px;">
+                        ⚡ ${fastestPlayer} was the fastest at ${fastestTime.toFixed(2)}s
+                    </div>
+                `;
+            }
+            
+            headerHtml += `</div>`;
+            resultsList.innerHTML = headerHtml;
             
             data.participants.forEach(p => {
                 const resultItem = document.createElement('div');

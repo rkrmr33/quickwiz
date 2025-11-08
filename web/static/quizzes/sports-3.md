@@ -4,6 +4,7 @@
 time_per_question: 15 seconds
 time_between_questions: 5 seconds
 streak_bonus: true
+quickest_answer_bonus: true
 
 ### What is a hat trick in soccer?
 - Three goals by one player

@@ -4,6 +4,7 @@
 time_per_question: 15 seconds
 time_between_questions: 5 seconds
 streak_bonus: true
+quickest_answer_bonus: true
 
 ### How many players are on a basketball team on the court?
 - 4

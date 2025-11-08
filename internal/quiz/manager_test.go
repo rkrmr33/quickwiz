@@ -57,7 +57,7 @@ func TestAddParticipant(t *testing.T) {
 	code, _ := manager.CreateSession(quiz)
 
 	// Add participant
-	err := manager.AddParticipant(code, "p1", "Alice")
+	err := manager.AddParticipant(code, "p1", "Alice", false)
 	if err != nil {
 		t.Fatalf("Failed to add participant: %v", err)
 	}
@@ -88,7 +88,7 @@ func TestStartQuiz(t *testing.T) {
 	}
 
 	code, _ := manager.CreateSession(quiz)
-	manager.AddParticipant(code, "p1", "Alice")
+	manager.AddParticipant(code, "p1", "Alice", false)
 
 	// Start quiz
 	err := manager.StartQuiz(code)
@@ -120,7 +120,7 @@ func TestSubmitAnswer(t *testing.T) {
 	}
 
 	code, _ := manager.CreateSession(quiz)
-	manager.AddParticipant(code, "p1", "Alice")
+	manager.AddParticipant(code, "p1", "Alice", false)
 	manager.StartQuiz(code)
 
 	// Submit answer
@@ -154,8 +154,8 @@ func TestCheckAllAnswered(t *testing.T) {
 	}
 
 	code, _ := manager.CreateSession(quiz)
-	manager.AddParticipant(code, "p1", "Alice")
-	manager.AddParticipant(code, "p2", "Bob")
+	manager.AddParticipant(code, "p1", "Alice", false)
+	manager.AddParticipant(code, "p2", "Bob", false)
 	manager.StartQuiz(code)
 
 	// Check before all answered
@@ -191,8 +191,8 @@ func TestRevealAnswer(t *testing.T) {
 	}
 
 	code, _ := manager.CreateSession(quiz)
-	manager.AddParticipant(code, "p1", "Alice")
-	manager.AddParticipant(code, "p2", "Bob")
+	manager.AddParticipant(code, "p1", "Alice", false)
+	manager.AddParticipant(code, "p2", "Bob", false)
 	manager.StartQuiz(code)
 	manager.SubmitAnswer(code, "p1", "A")
 	manager.SubmitAnswer(code, "p2", "B")
@@ -237,7 +237,7 @@ func TestNextQuestion(t *testing.T) {
 	}
 
 	code, _ := manager.CreateSession(quiz)
-	manager.AddParticipant(code, "p1", "Alice")
+	manager.AddParticipant(code, "p1", "Alice", false)
 	manager.StartQuiz(code)
 	manager.SubmitAnswer(code, "p1", "A")
 	manager.RevealAnswer(code)
@@ -288,9 +288,9 @@ func TestGetLeaderboard(t *testing.T) {
 	}
 
 	code, _ := manager.CreateSession(quiz)
-	manager.AddParticipant(code, "p1", "Alice")
-	manager.AddParticipant(code, "p2", "Bob")
-	manager.AddParticipant(code, "p3", "Charlie")
+	manager.AddParticipant(code, "p1", "Alice", false)
+	manager.AddParticipant(code, "p2", "Bob", false)
+	manager.AddParticipant(code, "p3", "Charlie", false)
 	manager.StartQuiz(code)
 
 	// Set scores manually for testing

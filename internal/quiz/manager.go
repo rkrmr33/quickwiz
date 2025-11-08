@@ -58,7 +58,7 @@ func (m *Manager) GetSession(code string) (*models.QuizSession, error) {
 }
 
 // AddParticipant adds a participant to a session
-func (m *Manager) AddParticipant(code, participantID, name string) error {
+func (m *Manager) AddParticipant(code, participantID, name string, isSpectator bool) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -71,9 +71,8 @@ func (m *Manager) AddParticipant(code, participantID, name string) error {
 		return fmt.Errorf("quiz has already started")
 	}
 
-	// Check if this is the first participant (creator/spectator)
-	isSpectator := len(session.Participants) == 0
-	if isSpectator {
+	// Check if this is the first participant (creator)
+	if len(session.Participants) == 0 {
 		session.CreatorID = participantID
 	}
 
@@ -219,8 +218,8 @@ func (m *Manager) RevealAnswer(code string) (*models.AnswerReveal, error) {
 
 	// Find the quickest correct answer if bonus is enabled
 	var quickestParticipant *models.Participant
+	var earliestTime time.Time
 	if session.Quiz.QuickestAnswerBonus {
-		var earliestTime time.Time
 		for _, p := range session.Participants {
 			if p.IsSpectator || !p.HasAnswered {
 				continue
@@ -244,6 +243,12 @@ func (m *Manager) RevealAnswer(code string) (*models.AnswerReveal, error) {
 		isCorrect := p.CurrentAnswer == currentQ.Answer
 		streakBonus := 0
 		isQuickest := false
+		answerTime := 0.0
+
+		// Calculate answer submission time if participant answered
+		if p.HasAnswered {
+			answerTime = p.AnsweredAt.Sub(session.QuestionStarted).Seconds()
+		}
 
 		if isCorrect {
 			// Increment streak
@@ -269,13 +274,14 @@ func (m *Manager) RevealAnswer(code string) (*models.AnswerReveal, error) {
 		}
 
 		participants = append(participants, models.ParticipantInfo{
-			Name:               p.Name,
-			Answer:             p.CurrentAnswer,
-			IsCorrect:          isCorrect,
-			Score:              p.Score,
-			Streak:             p.CurrentStreak,
-			StreakBonus:        streakBonus,
-			QuickestAnswerFlag: isQuickest,
+			Name:                 p.Name,
+			Answer:               p.CurrentAnswer,
+			IsCorrect:            isCorrect,
+			Score:                p.Score,
+			Streak:               p.CurrentStreak,
+			StreakBonus:          streakBonus,
+			QuickestAnswerFlag:   isQuickest,
+			AnswerSubmissionTime: answerTime,
 		})
 	}
 

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -164,9 +163,7 @@ func (h *Handler) JoinPageHandler(w http.ResponseWriter, r *http.Request) {
 	// Verify session exists
 	session, err := h.quizManager.GetSession(code)
 	if err != nil {
-		log.Print("JoinPage quiz not found: ", err)
-		// Redirect to home page
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		h.NotFoundHandler(w, r)
 		return
 	}
 
@@ -190,7 +187,8 @@ func (h *Handler) JoinQuizHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Name string `json:"name"`
+		Name        string `json:"name"`
+		IsSpectator bool   `json:"is_spectator"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -205,7 +203,7 @@ func (h *Handler) JoinQuizHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("JoinQuiz participant attempting to join", "name", req.Name, "code", code)
+	slog.Info("JoinQuiz participant attempting to join", "name", req.Name, "is_spectator", req.IsSpectator, "code", code)
 
 	// Check if participant with this name already exists (for reconnection)
 	session, err := h.quizManager.GetSession(code)
@@ -231,13 +229,13 @@ func (h *Handler) JoinQuizHandler(w http.ResponseWriter, r *http.Request) {
 	// If not rejoining, create a new participant
 	if !isRejoining {
 		participantID = generateParticipantID()
-		err = h.quizManager.AddParticipant(code, participantID, req.Name)
+		err = h.quizManager.AddParticipant(code, participantID, req.Name, req.IsSpectator)
 		if err != nil {
 			slog.Error("JoinQuiz failed to add participant", "error", err, "name", req.Name, "code", code)
 			http.Error(w, fmt.Sprintf("Failed to join quiz: %v", err), http.StatusBadRequest)
 			return
 		}
-		slog.Info("JoinQuiz participant joined successfully", "name", req.Name, "participant_id", participantID, "code", code)
+		slog.Info("JoinQuiz participant joined successfully", "name", req.Name, "is_spectator", req.IsSpectator, "participant_id", participantID, "code", code)
 	}
 
 	// Refresh session after potential addition
@@ -278,7 +276,7 @@ func (h *Handler) QuizPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := h.quizManager.GetSession(code)
 	if err != nil {
-		http.Error(w, "Quiz not found", http.StatusNotFound)
+		h.NotFoundHandler(w, r)
 		return
 	}
 

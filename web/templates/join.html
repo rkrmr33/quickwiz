@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Join Quiz - {{.Title}}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         * {
@@ -42,6 +43,36 @@
             font-weight: bold;
             letter-spacing: 2px;
             margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        .quiz-code-text {
+            flex: 1;
+            text-align: center;
+        }
+        .quiz-code-label {
+            font-weight: normal;
+        }
+        .quiz-code-value {
+            font-weight: bold;
+        }
+        .quiz-code-copy {
+            background: transparent;
+            color: #667eea;
+            border: none;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 0.5em;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            width: auto;
+            opacity: 0.7;
+        }
+        .quiz-code-copy:hover {
+            opacity: 1;
+            transform: scale(1.1);
         }
         input {
             width: 100%;
@@ -151,13 +182,52 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
             background: white;
         }
+        .spectator-option {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        .spectator-option:has(input:checked) {
+            background: #f0f7ff;
+            border-color: #667eea;
+        }
+        .spectator-option label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 1em;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+            margin: 0;
+        }
+        .spectator-option input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            margin: 0;
+            flex-shrink: 0;
+        }
+        .spectator-help {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 8px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <a href="/" class="home-button">🎯 QuicKwiz</a>
     <div class="container">
         <h1>🎯 {{.Title}}</h1>
-        <div class="quiz-code">Quiz Code: {{.Code}}</div>
+        <div class="quiz-code">
+            <span class="quiz-code-text"><span class="quiz-code-label">Quiz Code:</span> <span class="quiz-code-value">{{.Code}}</span></span>
+            <button class="quiz-code-copy" onclick="copyCode(event)" title="Copy code">📋</button>
+        </div>
         
         <div class="share-section">
             <h3>📤 Share this quiz</h3>
@@ -175,6 +245,15 @@
         
         <div id="join-form">
             <input type="text" id="name" placeholder="Your name" required autofocus>
+            
+            <div class="spectator-option">
+                <label>
+                    <input type="checkbox" id="spectator" value="1">
+                    <span>👓 Join as spectator</span>
+                </label>
+                <div class="spectator-help">Spectators can watch but won't participate in scoring</div>
+            </div>
+            
             <button onclick="joinQuiz()">Join Quiz 🚀</button>
         </div>
         
@@ -189,6 +268,44 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('quizLink').textContent = quizUrl;
         });
+        
+        async function copyCode(event) {
+            try {
+                await navigator.clipboard.writeText(quizCode);
+                // Visual feedback - change icon temporarily
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓';
+                btn.style.color = '#51cf66';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.color = '#667eea';
+                }, 1500);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = quizCode;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const btn = event.target;
+                    const originalText = btn.textContent;
+                    btn.textContent = '✓';
+                    btn.style.color = '#51cf66';
+                    
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.color = '#667eea';
+                    }, 1500);
+                } catch (err) {
+                    alert('Failed to copy code');
+                }
+                document.body.removeChild(textArea);
+            }
+        }
         
         async function copyLink() {
             try {
@@ -223,6 +340,7 @@
         
         async function joinQuiz() {
             const name = document.getElementById('name').value.trim();
+            const isSpectator = document.getElementById('spectator').checked;
             const errorDiv = document.getElementById('error');
             
             if (!name) {
@@ -237,7 +355,10 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name: name })
+                    body: JSON.stringify({ 
+                        name: name,
+                        is_spectator: isSpectator
+                    })
                 });
                 
                 if (!response.ok) {

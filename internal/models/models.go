@@ -80,13 +80,14 @@ type AnswerReveal struct {
 
 // ParticipantInfo for displaying participant status
 type ParticipantInfo struct {
-	Name               string `json:"name"`
-	Answer             string `json:"answer"`
-	IsCorrect          bool   `json:"is_correct"`
-	Score              int    `json:"score"`
-	Streak             int    `json:"streak"`               // Current streak count
-	StreakBonus        int    `json:"streak_bonus"`         // Bonus points earned from streak
-	QuickestAnswerFlag bool   `json:"quickest_answer_flag"` // True if this participant answered correctly first
+	Name                 string  `json:"name"`
+	Answer               string  `json:"answer"`
+	IsCorrect            bool    `json:"is_correct"`
+	Score                int     `json:"score"`
+	Streak               int     `json:"streak"`                 // Current streak count
+	StreakBonus          int     `json:"streak_bonus"`           // Bonus points earned from streak
+	QuickestAnswerFlag   bool    `json:"quickest_answer_flag"`   // True if this participant answered correctly first
+	AnswerSubmissionTime float64 `json:"answer_submission_time"` // Time in seconds to submit answer (0 if not answered)
 }
 
 // ParticipantJoined sent when a new participant joins
