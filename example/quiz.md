@@ -4,6 +4,7 @@
 time_per_question: 10 seconds
 time_between_questions: 10 seconds
 streak_bonus: true
+quickest_answer_bonus: true
 
 ### What is the capital of France?
 - Berlin

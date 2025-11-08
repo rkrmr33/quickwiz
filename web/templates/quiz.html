@@ -963,6 +963,11 @@
                     bonusDisplay = `<span style="color: #ffd93d; margin-left: 8px;">+${p.streak_bonus} bonus!</span>`;
                 }
                 
+                let quickestDisplay = '';
+                if (p.quickest_answer_flag) {
+                    quickestDisplay = `<span style="color: #4caf50; margin-left: 8px;">⚡ +1 Fastest!</span>`;
+                }
+                
                 resultItem.innerHTML = `
                     <div class="result-avatar" style="background: ${color.bg}; color: ${color.text};">${initials}</div>
                     <div class="result-info">
@@ -970,6 +975,7 @@
                             <strong>${p.name}</strong>
                             ${isCurrentUser ? '<span style="color: #667eea; margin-left: 8px;">(You)</span>' : ''}
                             ${streakDisplay}
+                            ${quickestDisplay}
                         </div>
                         <div style="color: #666; font-size: 0.95em; margin-top: 4px;">
                             ${p.answer || 'No answer'}

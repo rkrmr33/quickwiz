@@ -312,6 +312,18 @@
                     <span class="quiz-icon">🍕</span>
                     <span class="quiz-title">Food & Cuisine</span>
                 </button>
+                <button class="builtin-quiz-btn" onclick="startBuiltinQuiz('history')">
+                    <span class="quiz-icon">📜</span>
+                    <span class="quiz-title">World History</span>
+                </button>
+                <button class="builtin-quiz-btn" onclick="startBuiltinQuiz('science')">
+                    <span class="quiz-icon">🔬</span>
+                    <span class="quiz-title">Science</span>
+                </button>
+                <button class="builtin-quiz-btn" onclick="startBuiltinQuiz('sports')">
+                    <span class="quiz-icon">⚽</span>
+                    <span class="quiz-title">Sports</span>
+                </button>
             </div>
         </div>
 
@@ -370,250 +382,42 @@ streak_bonus: true
     </div>
 
     <script>
-        // Built-in quizzes stored in frontend
+        // Built-in quiz file mappings - 3 quizzes per category
         const builtinQuizzes = {
-            space: `# Space Exploration Quiz
-
-# Settings
-time_per_question: 15 seconds
-time_between_questions: 5 seconds
-streak_bonus: true
-
-### What is the largest planet in our solar system?
-- Earth
-- Mars
-- Jupiter
-- Saturn
-* Answer: Jupiter
-
-### How many moons does Earth have?
-- 0
-- 1
-- 2
-- 3
-* Answer: 1
-
-### Which planet is known as the "Red Planet"?
-- Venus
-- Mars
-- Mercury
-- Neptune
-* Answer: Mars
-
-### What is the name of NASA's most famous space telescope?
-- Kepler
-- Hubble
-- Spitzer
-- Chandra
-* Answer: Hubble
-
-### How long does it take for light from the Sun to reach Earth?
-- 8 seconds
-- 8 minutes
-- 8 hours
-- 8 days
-* Answer: 8 minutes
-
-### Which planet has the most extensive ring system?
-- Jupiter
-- Saturn
-- Uranus
-- Neptune
-* Answer: Saturn
-
-### What is the closest star to Earth (besides the Sun)?
-- Alpha Centauri
-- Proxima Centauri
-- Sirius
-- Betelgeuse
-* Answer: Proxima Centauri
-
-### What year did the first human land on the Moon?
-- 1965
-- 1969
-- 1972
-- 1975
-* Answer: 1969
-
-### Which planet is the hottest in our solar system?
-- Mercury
-- Venus
-- Mars
-- Jupiter
-* Answer: Venus
-
-### What is the name of the galaxy that contains our solar system?
-- Andromeda
-- Milky Way
-- Whirlpool
-- Sombrero
-* Answer: Milky Way`,
-            cities: `# World Cities Quiz
-
-# Settings
-time_per_question: 15 seconds
-time_between_questions: 5 seconds
-streak_bonus: true
-
-### What is the capital of France?
-- London
-- Berlin
-- Paris
-- Madrid
-* Answer: Paris
-
-### Which city is known as "The Big Apple"?
-- Los Angeles
-- Chicago
-- New York
-- Boston
-* Answer: New York
-
-### In which city would you find the Colosseum?
-- Athens
-- Rome
-- Istanbul
-- Cairo
-* Answer: Rome
-
-### What is the most populous city in the world?
-- Shanghai
-- Mumbai
-- Tokyo
-- São Paulo
-* Answer: Tokyo
-
-### Which city is home to the famous Golden Gate Bridge?
-- Los Angeles
-- San Francisco
-- Seattle
-- Portland
-* Answer: San Francisco
-
-### What is the capital of Australia?
-- Sydney
-- Melbourne
-- Canberra
-- Brisbane
-* Answer: Canberra
-
-### Which European city is divided by the Danube River?
-- Vienna
-- Prague
-- Budapest
-- Belgrade
-* Answer: Budapest
-
-### In which city is the famous Christ the Redeemer statue located?
-- Buenos Aires
-- Lima
-- Rio de Janeiro
-- Santiago
-* Answer: Rio de Janeiro
-
-### What is the capital of Japan?
-- Osaka
-- Kyoto
-- Tokyo
-- Yokohama
-* Answer: Tokyo
-
-### Which city is known as the "City of Love"?
-- Venice
-- Rome
-- Paris
-- Vienna
-* Answer: Paris`,
-            food: `# Food & Cuisine Quiz
-
-# Settings
-time_per_question: 15 seconds
-time_between_questions: 5 seconds
-streak_bonus: true
-
-### What is the main ingredient in guacamole?
-- Tomato
-- Avocado
-- Lime
-- Onion
-* Answer: Avocado
-
-### Which country is famous for originating sushi?
-- China
-- Korea
-- Japan
-- Thailand
-* Answer: Japan
-
-### What type of pasta is shaped like little rice grains?
-- Orzo
-- Penne
-- Fusilli
-- Farfalle
-* Answer: Orzo
-
-### What is the most expensive spice in the world by weight?
-- Vanilla
-- Saffron
-- Cardamom
-- Cinnamon
-* Answer: Saffron
-
-### Which fruit is known as the "king of fruits" in Southeast Asia?
-- Mango
-- Durian
-- Papaya
-- Rambutan
-* Answer: Durian
-
-### What is the main ingredient in traditional hummus?
-- Lentils
-- Chickpeas
-- Black beans
-- Peas
-* Answer: Chickpeas
-
-### Which cheese is traditionally used on a Margherita pizza?
-- Parmesan
-- Cheddar
-- Mozzarella
-- Gouda
-* Answer: Mozzarella
-
-### What is the primary ingredient in traditional Japanese miso soup?
-- Tofu
-- Seaweed
-- Fermented soybean paste
-- Rice
-* Answer: Fermented soybean paste
-
-### Which country is the largest producer of coffee in the world?
-- Colombia
-- Vietnam
-- Brazil
-- Ethiopia
-* Answer: Brazil
-
-### What is the French term for a dish that is cooked "under the broiler"?
-- Sauté
-- Gratinée
-- Flambé
-- Poêlé
-* Answer: Gratinée`
+            space: ['space-1.md', 'space-2.md', 'space-3.md'],
+            cities: ['cities-1.md', 'cities-2.md', 'cities-3.md'],
+            food: ['food-1.md', 'food-2.md', 'food-3.md'],
+            history: ['history-1.md', 'history-2.md', 'history-3.md'],
+            science: ['science-1.md', 'science-2.md', 'science-3.md'],
+            sports: ['sports-1.md', 'sports-2.md', 'sports-3.md']
         };
 
-        async function startBuiltinQuiz(quizName) {
+        async function startBuiltinQuiz(category) {
             const buttons = document.querySelectorAll('.builtin-quiz-btn');
             buttons.forEach(btn => btn.disabled = true);
             
-            const markdown = builtinQuizzes[quizName];
-            if (!markdown) {
-                alert('Quiz not found');
+            const quizFiles = builtinQuizzes[category];
+            if (!quizFiles || quizFiles.length === 0) {
+                alert('Quiz category not found');
                 buttons.forEach(btn => btn.disabled = false);
                 return;
             }
             
+            // Select a random quiz from the category
+            const randomIndex = Math.floor(Math.random() * quizFiles.length);
+            const quizFile = quizFiles[randomIndex];
+            
+            console.log(`Starting ${category} quiz #${randomIndex + 1} of ${quizFiles.length} (${quizFile})`);
+            
             try {
+                // Fetch the quiz markdown file
+                const fetchResponse = await fetch(`/static/quizzes/${quizFile}`);
+                if (!fetchResponse.ok) {
+                    throw new Error(`Failed to load quiz file: ${quizFile}`);
+                }
+                const markdown = await fetchResponse.text();
+                
+                // Create the quiz via API
                 const response = await fetch('/api/quiz', {
                     method: 'POST',
                     headers: {
@@ -632,6 +436,7 @@ streak_bonus: true
                     buttons.forEach(btn => btn.disabled = false);
                 }
             } catch (error) {
+                console.error('Error starting quiz:', error);
                 alert('Failed to connect to server. Please try again.');
                 buttons.forEach(btn => btn.disabled = false);
             }

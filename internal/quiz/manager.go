@@ -217,6 +217,23 @@ func (m *Manager) RevealAnswer(code string) (*models.AnswerReveal, error) {
 	currentQ := session.Quiz.Questions[session.CurrentQuestion]
 	session.State = models.StateAnswer
 
+	// Find the quickest correct answer if bonus is enabled
+	var quickestParticipant *models.Participant
+	if session.Quiz.QuickestAnswerBonus {
+		var earliestTime time.Time
+		for _, p := range session.Participants {
+			if p.IsSpectator || !p.HasAnswered {
+				continue
+			}
+			if p.CurrentAnswer == currentQ.Answer {
+				if quickestParticipant == nil || p.AnsweredAt.Before(earliestTime) {
+					quickestParticipant = p
+					earliestTime = p.AnsweredAt
+				}
+			}
+		}
+	}
+
 	participants := make([]models.ParticipantInfo, 0, len(session.Participants))
 	for _, p := range session.Participants {
 		// Skip spectators in results
@@ -226,6 +243,7 @@ func (m *Manager) RevealAnswer(code string) (*models.AnswerReveal, error) {
 
 		isCorrect := p.CurrentAnswer == currentQ.Answer
 		streakBonus := 0
+		isQuickest := false
 
 		if isCorrect {
 			// Increment streak
@@ -239,18 +257,25 @@ func (m *Manager) RevealAnswer(code string) (*models.AnswerReveal, error) {
 				streakBonus = calculateStreakBonus(p.CurrentStreak)
 				p.Score += streakBonus
 			}
+
+			// Award quickest answer bonus if applicable
+			if session.Quiz.QuickestAnswerBonus && quickestParticipant != nil && p.ID == quickestParticipant.ID {
+				p.Score++
+				isQuickest = true
+			}
 		} else {
 			// Reset streak on wrong answer
 			p.CurrentStreak = 0
 		}
 
 		participants = append(participants, models.ParticipantInfo{
-			Name:        p.Name,
-			Answer:      p.CurrentAnswer,
-			IsCorrect:   isCorrect,
-			Score:       p.Score,
-			Streak:      p.CurrentStreak,
-			StreakBonus: streakBonus,
+			Name:               p.Name,
+			Answer:             p.CurrentAnswer,
+			IsCorrect:          isCorrect,
+			Score:              p.Score,
+			Streak:             p.CurrentStreak,
+			StreakBonus:        streakBonus,
+			QuickestAnswerFlag: isQuickest,
 		})
 	}
 

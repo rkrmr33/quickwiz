@@ -10,6 +10,7 @@ type Quiz struct {
 	TimePerQuestion      int        `json:"time_per_question"`      // in seconds
 	TimeBetweenQuestions int        `json:"time_between_questions"` // in seconds
 	StreakBonus          bool       `json:"streak_bonus"`           // Enable streak bonus points
+	QuickestAnswerBonus  bool       `json:"quickest_answer_bonus"`  // Give +1 point to first correct answer
 	Questions            []Question `json:"questions"`
 }
 
@@ -79,12 +80,13 @@ type AnswerReveal struct {
 
 // ParticipantInfo for displaying participant status
 type ParticipantInfo struct {
-	Name        string `json:"name"`
-	Answer      string `json:"answer"`
-	IsCorrect   bool   `json:"is_correct"`
-	Score       int    `json:"score"`
-	Streak      int    `json:"streak"`       // Current streak count
-	StreakBonus int    `json:"streak_bonus"` // Bonus points earned from streak
+	Name               string `json:"name"`
+	Answer             string `json:"answer"`
+	IsCorrect          bool   `json:"is_correct"`
+	Score              int    `json:"score"`
+	Streak             int    `json:"streak"`               // Current streak count
+	StreakBonus        int    `json:"streak_bonus"`         // Bonus points earned from streak
+	QuickestAnswerFlag bool   `json:"quickest_answer_flag"` // True if this participant answered correctly first
 }
 
 // ParticipantJoined sent when a new participant joins

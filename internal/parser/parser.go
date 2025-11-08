@@ -69,6 +69,9 @@ func ParseQuizMarkdown(markdown string) (*models.Quiz, error) {
 				} else if key == "streak_bonus" {
 					// Parse boolean (e.g., "true", "false", "yes", "no")
 					quiz.StreakBonus = parseBool(value)
+				} else if key == "quickest_answer_bonus" {
+					// Parse boolean (e.g., "true", "false", "yes", "no")
+					quiz.QuickestAnswerBonus = parseBool(value)
 				}
 				continue
 			}

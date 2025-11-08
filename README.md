@@ -86,6 +86,7 @@ time_per_question: 30 seconds
    - `time_per_question`: Duration in seconds, minutes, or as "X seconds/minutes"
    - `time_between_questions`: Time between questions
    - `streak_bonus`: true/false to enable/disable streak scoring
+   - `quickest_answer_bonus`: true/false to award +1 point to the first correct answer
 3. **Questions**: Use `###` for question text
 4. **Options**: Use `-` for each answer option
 5. **Answer**: Use `* Answer:` followed by the correct answer (must match one of the options exactly)
