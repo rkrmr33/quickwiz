@@ -427,6 +427,51 @@
         // Sound effects
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         let soundsEnabled = true;
+        let audioUnlocked = false;
+        
+        // Pre-load the win audio for Safari compatibility
+        const winAudio = new Audio();
+        winAudio.src = '/static/win.mp3';
+        winAudio.volume = 0.4;
+        winAudio.preload = 'auto';
+        winAudio.load(); // Explicitly load for Safari
+        
+        // Unlock audio on first user interaction (required for Safari and mobile browsers)
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            
+            console.log('Attempting to unlock audio, current state:', audioContext.state);
+            
+            // Resume AudioContext
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('AudioContext resumed');
+                }).catch(err => {
+                    console.error('Failed to resume AudioContext:', err);
+                });
+            }
+            
+            // Try to play and immediately pause to unlock (iOS requirement)
+            winAudio.muted = true; // Mute for unlock
+            const unlockPromise = winAudio.play();
+            if (unlockPromise !== undefined) {
+                unlockPromise.then(() => {
+                    winAudio.pause();
+                    winAudio.currentTime = 0;
+                    winAudio.muted = false; // Unmute after unlock
+                    audioUnlocked = true;
+                    console.log('Audio unlocked successfully (iOS/Safari compatible)');
+                }).catch(err => {
+                    console.log('Audio unlock attempt failed:', err.name, err.message);
+                    winAudio.muted = false;
+                });
+            }
+        }
+        
+        // Add unlock listeners for various user interactions (iOS needs touchstart)
+        ['click', 'touchstart', 'touchend', 'keydown'].forEach(event => {
+            document.addEventListener(event, unlockAudio, { once: true, passive: true });
+        });
 
         function playTick() {
             if (!soundsEnabled) return;
@@ -504,10 +549,34 @@
 
         function playWin() {
             if (!soundsEnabled) return;
-            // Use audio file for win jingle
-            const audio = new Audio('/static/win.mp3');
-            audio.volume = 0.4; // Set volume to 40%
-            audio.play().catch(err => console.log('Audio play failed:', err));
+            
+            console.log('Attempting to play win sound, unlocked:', audioUnlocked);
+            
+            // Ensure audio is unlocked first
+            if (!audioUnlocked) {
+                unlockAudio();
+            }
+            
+            // Reset and play the same audio element (iOS compatible)
+            winAudio.currentTime = 0;
+            winAudio.volume = 0.4;
+            
+            const playPromise = winAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('Win sound playing successfully');
+                }).catch(err => {
+                    console.error('Failed to play win sound:', err.name, err.message);
+                    // iOS fallback: try creating a new audio element
+                    try {
+                        const fallbackAudio = new Audio('/static/win.mp3');
+                        fallbackAudio.volume = 0.4;
+                        fallbackAudio.play();
+                    } catch (e) {
+                        console.error('Fallback also failed:', e);
+                    }
+                });
+            }
         }
 
         // WebSocket connection
