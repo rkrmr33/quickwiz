@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .header h1 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .timer {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        .timer.warning {
+            color: #ff6b6b;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .question-number {
+            color: #667eea;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        .question-text {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .options {
+            display: grid;
+            gap: 15px;
+        }
+        .option {
+            background: #f8f9fa;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .option:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        .option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .option.correct {
+            background: #51cf66;
+            color: white;
+            border-color: #51cf66;
+        }
+        .option.incorrect {
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff6b6b;
+        }
+        .option.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .waiting {
+            text-align: center;
+            padding: 60px 40px;
+        }
+        .waiting h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .participants-list {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .participant {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .participant:last-child {
+            border-bottom: none;
+        }
+        .participant-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .participant-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .share-section {
+            background: #f0f7ff;
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .share-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .share-link-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .share-link {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #667eea;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .copy-button {
+            width: auto;
+            padding: 12px 24px;
+            font-size: 0.95em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .copy-button:hover {
+            transform: translateY(-2px);
+        }
+        .copy-success {
+            color: #51cf66;
+            font-size: 0.9em;
+            margin-top: 8px;
+            display: none;
+            text-align: center;
+        }
+        .copy-success.show {
+            display: block;
+        }
+        .start-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 60px;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+        .start-button:hover {
+            transform: translateY(-3px);
+        }
+        .results {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .results h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .result-item.answered {
+            border-left: 5px solid #51cf66;
+        }
+        .result-item.not-answered {
+            border-left: 5px solid #ff6b6b;
+        }
+        .result-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .result-info {
+            flex: 1;
+        }
+        .answer-counter {
+            color: #667eea;
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .leaderboard {
+            margin-top: 20px;
+        }
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            font-size: 1.2em;
+        }
+        .leaderboard-item:first-child {
+            background: linear-gradient(135deg, #ffd93d 0%, #f9ca24 100%);
+            color: #333;
+            font-size: 1.5em;
+            padding: 30px;
+        }
+        .rank {
+            font-weight: bold;
+            font-size: 1.5em;
+            margin-right: 20px;
+        }
+        .score {
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+        .hidden {
+            display: none;
+        }
+        .home-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+        .home-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            background: white;
+        }
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.6;
+        }
+        .sound-toggle:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+        .sound-toggle.muted {
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="home-button">🎯 QuicKwiz</a>
+    <button id="sound-toggle" class="sound-toggle" onclick="toggleSound()" title="Toggle sound effects">🔊</button>
+    <div class="container">
+        <div class="header">
+            <h1>{{.Title}}</h1>
+            <div id="timer" class="timer" style="display: none;">--</div>
+        </div>
+
+        <!-- Waiting Room -->
+        <div id="waiting-room" class="question-card waiting">
+            <h2>🎯 Waiting for quiz to start...</h2>
+            <p style="color: #666; font-size: 1.1em;">Participants will appear here as they join</p>
+            
+            <div class="share-section">
+                <h3>📤 Share this quiz</h3>
+                <p style="color: #666; font-size: 0.95em; margin-bottom: 10px;">
+                    Share this link with other participants:
+                </p>
+                <div class="share-link-container">
+                    <div class="share-link" id="quizLink"></div>
+                    <button class="copy-button" onclick="copyLink()">📋 Copy</button>
+                </div>
+                <div class="copy-success" id="copySuccess">✓ Link copied to clipboard!</div>
+            </div>
+            
+            <div id="participants-list" class="participants-list"></div>
+            <button id="start-button" class="start-button" style="display: none;">Start Quiz</button>
+        </div>
+
+        <!-- Question Display -->
+        <div id="question-display" class="question-card hidden">
+            <div class="question-number" id="question-number"></div>
+            <div class="answer-counter" id="answer-counter">0 / 0 answered</div>
+            <div id="streak-indicator" style="display: none; color: #ff6b6b; font-size: 1.2em; font-weight: bold; margin-bottom: 15px;">
+                🔥 <span id="streak-count">0</span> streak! <span id="streak-bonus-text"></span>
+            </div>
+            <div class="question-text" id="question-text"></div>
+            <div class="options" id="options"></div>
+        </div>
+
+        <!-- Answer Results -->
+        <div id="answer-results" class="results hidden">
+            <h2>📊 Answers</h2>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="color: #667eea; font-size: 1em; font-weight: 600;">
+                    <span id="next-question-label">Next question in:</span> <span id="next-question-timer" style="font-size: 1.5em; font-weight: bold;">--</span>s
+                </div>
+            </div>
+            <div id="results-list"></div>
+        </div>
+
+        <!-- Final Leaderboard -->
+        <div id="final-leaderboard" class="results hidden">
+            <h2>🏆 Final Results</h2>
+            <div id="leaderboard" class="leaderboard"></div>
+        </div>
+    </div>
+
+    <script>
+        const quizCode = '{{.Code}}';
+        const participantId = '{{.ParticipantID}}';
+        let participantName = ''; // Will be fetched from server
+        
+        let ws = null;
+        let currentState = 'waiting';
+        let hasAnswered = false;
+        let isReconnecting = false;
+        let participantIdToName = {}; // Map participant IDs to { name, isSpectator } for avatar display
+        let currentQuestionNumber = 0;
+        let totalQuestions = 0;
+        let currentStreak = 0; // Track current user's streak
+        let pollingInterval = null; // Interval for polling quiz state
+        
+        // Sound effects
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let soundsEnabled = true;
+
+        function playTick() {
+            if (!soundsEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function playClick() {
+            if (!soundsEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 600;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function playReveal() {
+            if (!soundsEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.3);
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        function playJoin() {
+            if (!soundsEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // C5
+            oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.1); // E5
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+
+        function playWin() {
+            if (!soundsEnabled) return;
+            // Use audio file for win jingle
+            const audio = new Audio('/static/win.mp3');
+            audio.volume = 0.4; // Set volume to 40%
+            audio.play().catch(err => console.log('Audio play failed:', err));
+        }
+
+        // WebSocket connection
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws/${quizCode}?participant_id=${participantId}`);
+            
+            ws.onopen = function() {
+                console.log(isReconnecting ? 'Reconnected to quiz' : 'Connected to quiz');
+                // Only fetch on reconnection to get latest state
+                if (isReconnecting) {
+                    fetchQuizState();
+                }
+                isReconnecting = false;
+            };
+            
+            ws.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                handleMessage(message);
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+            
+            ws.onclose = function() {
+                console.log('Disconnected from quiz');
+                isReconnecting = true;
+                setTimeout(connect, 3000); // Reconnect after 3 seconds
+            };
+        }
+
+        // Color palette for avatars
+        const avatarColors = [
+            { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', text: '#ffffff' }, // Purple
+            { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', text: '#ffffff' }, // Pink
+            { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', text: '#ffffff' }, // Blue
+            { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', text: '#ffffff' }, // Green
+            { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', text: '#ffffff' }, // Orange
+            { bg: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)', text: '#ffffff' }, // Teal
+            { bg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', text: '#333333' }, // Pastel
+            { bg: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', text: '#333333' }, // Light Pink
+            { bg: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', text: '#333333' }, // Peach
+            { bg: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)', text: '#333333' }, // Sky Blue
+        ];
+
+        function hashString(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash);
+        }
+
+        function getAvatarColor(participantId) {
+            const hash = hashString(participantId);
+            return avatarColors[hash % avatarColors.length];
+        }
+
+        function getInitials(name) {
+            return name
+                .split(' ')
+                .map(word => word[0])
+                .join('')
+                .toUpperCase()
+                .substring(0, 2);
+        }
+
+        async function fetchQuizState() {
+            try {
+                const response = await fetch(`/api/quiz/${quizCode}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Display all existing participants
+                    const participantsList = document.getElementById('participants-list');
+                    participantsList.innerHTML = ''; // Clear any existing content
+                    
+                    if (data.participants && data.participants.length > 0) {
+                        data.participants.forEach(participant => {
+                            // Store participant info for later use (including spectator status)
+                            participantIdToName[participant.id] = {
+                                name: participant.name,
+                                isSpectator: participant.isSpectator || false
+                            };
+                            
+                            const participantDiv = document.createElement('div');
+                            participantDiv.className = 'participant';
+                            const isCurrentUser = participant.id === participantId;
+                            
+                            // Set the participant name for current user
+                            if (isCurrentUser) {
+                                participantName = participant.name;
+                            }
+                            const initials = getInitials(participant.name);
+                            const color = getAvatarColor(participant.id);
+                            
+                            participantDiv.innerHTML = `
+                                <div class="participant-avatar" style="background: ${color.bg}; color: ${color.text};">${initials}</div>
+                                <div class="participant-info">
+                                    <span style="font-weight: bold;">${participant.name}</span>
+                                    ${participant.isSpectator ? '<span style="color: #ffd700;">👑 Host</span>' : ''}
+                                    ${isCurrentUser ? '<span style="color: #667eea;">(You)</span>' : ''}
+                                    <span style="color: #51cf66;">✓ Ready</span>
+                                </div>
+                            `;
+                            participantsList.appendChild(participantDiv);
+                        });
+                    }
+                    
+                    // Show start button only for the creator (check against server creatorId)
+                    if (data.creatorId === participantId) {
+                        document.getElementById('start-button').style.display = 'block';
+                    }
+                    
+                    // Update participants count
+                    const waitingRoom = document.getElementById('waiting-room');
+                    const subtitle = waitingRoom.querySelector('p');
+                    if (subtitle && data.participantCount > 0) {
+                        subtitle.textContent = `${data.participantCount} participant${data.participantCount !== 1 ? 's' : ''} in the room`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching quiz state:', error);
+            }
+        }
+
+        function handleMessage(message) {
+            console.log('Received message:', message.type, message.payload);
+            
+            switch(message.type) {
+                case 'participant_joined':
+                    updateParticipantsList(message.payload);
+                    break;
+                case 'question':
+                    showQuestion(message.payload);
+                    break;
+                case 'time_update':
+                    updateTimer(message.payload.time_remaining);
+                    break;
+                case 'answer_reveal':
+                    showAnswerResults(message.payload);
+                    break;
+                case 'answer_count_update':
+                    updateAnswerCount(message.payload);
+                    break;
+                case 'quiz_finished':
+                    showFinalResults(message.payload);
+                    break;
+                default:
+                    console.warn('Unknown message type:', message.type);
+            }
+        }
+
+        function updateAnswerCount(data) {
+            const counterEl = document.getElementById('answer-counter');
+            if (counterEl) {
+                counterEl.textContent = `${data.answered_count} / ${data.total_participants} answered`;
+            }
+        }
+
+        function updateParticipantsList(data) {
+            // Store participant info for later use (including spectator status)
+            participantIdToName[data.id] = {
+                name: data.name,
+                isSpectator: data.is_spectator || false
+            };
+            
+            // Play join sound for new participants (but not for yourself)
+            const isCurrentUser = data.id === participantId;
+            if (!isCurrentUser) {
+                playJoin();
+            }
+            
+            const participantsList = document.getElementById('participants-list');
+            const participantDiv = document.createElement('div');
+            participantDiv.className = 'participant';
+            const initials = getInitials(data.name);
+            const color = getAvatarColor(data.id);
+            
+            participantDiv.innerHTML = `
+                <div class="participant-avatar" style="background: ${color.bg}; color: ${color.text};">${initials}</div>
+                <div class="participant-info">
+                    <span style="font-weight: bold;">${data.name}</span>
+                    ${data.is_spectator ? '<span style="color: #ffd700;">👑 Host</span>' : ''}
+                    ${isCurrentUser ? '<span style="color: #667eea;">(You)</span>' : ''}
+                    <span style="color: #51cf66;">✓ Joined</span>
+                </div>
+            `;
+            participantsList.appendChild(participantDiv);
+            
+            // Update count in waiting message
+            const waitingRoom = document.getElementById('waiting-room');
+            const subtitle = waitingRoom.querySelector('p');
+            if (subtitle) {
+                subtitle.textContent = `${data.participant_count} participant${data.participant_count !== 1 ? 's' : ''} in the room`;
+            }
+        }
+
+        function showQuestion(data) {
+            currentState = 'question';
+            hasAnswered = false;
+            
+            // Stop polling once quiz starts
+            stopPolling();
+            
+            // Store question info
+            currentQuestionNumber = data.question_number;
+            totalQuestions = data.total_questions;
+            
+            document.getElementById('waiting-room').classList.add('hidden');
+            document.getElementById('answer-results').classList.add('hidden');
+            document.getElementById('question-display').classList.remove('hidden');
+            document.getElementById('timer').style.display = 'block';
+            
+            document.getElementById('question-number').textContent = 
+                `Question ${data.question_number} of ${data.total_questions}`;
+            
+            // Initialize answer counter (exclude spectators)
+            const totalParticipants = Object.values(participantIdToName).filter(p => !p.isSpectator).length;
+            document.getElementById('answer-counter').textContent = `0 / ${totalParticipants} answered`;
+            
+            // Show streak indicator if user has a streak
+            const streakIndicator = document.getElementById('streak-indicator');
+            const streakCount = document.getElementById('streak-count');
+            const streakBonusText = document.getElementById('streak-bonus-text');
+            
+            if (currentStreak >= 3) {
+                streakCount.textContent = currentStreak;
+                
+                // Calculate and show bonus
+                let bonus = 0;
+                if (currentStreak >= 10) {
+                    bonus = 5;
+                } else if (currentStreak >= 5) {
+                    bonus = 2;
+                } else if (currentStreak >= 3) {
+                    bonus = 1;
+                }
+                streakBonusText.textContent = `(+${bonus} bonus point${bonus > 1 ? 's' : ''} if correct!)`;
+                streakIndicator.style.display = 'block';
+            } else {
+                streakIndicator.style.display = 'none';
+            }
+            
+            document.getElementById('question-text').textContent = data.text;
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            
+            data.options.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectOption(option, optionDiv);
+                optionsDiv.appendChild(optionDiv);
+            });
+            
+            updateTimer(data.time_remaining);
+        }
+
+        function selectOption(answer, element) {
+            if (hasAnswered) return;
+            
+            // Play click sound
+            playClick();
+            
+            // Remove previous selection
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Mark this option as selected
+            element.classList.add('selected');
+            
+            // Submit answer
+            submitAnswer(answer);
+        }
+
+        async function submitAnswer(answer) {
+            hasAnswered = true;
+            
+            // Disable all options
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.add('disabled');
+            });
+            
+            try {
+                await fetch(`/api/quiz/${quizCode}/answer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        participant_id: participantId,
+                        answer: answer
+                    })
+                });
+                
+                // Answer count will be updated via WebSocket broadcast
+            } catch (error) {
+                console.error('Error submitting answer:', error);
+            }
+        }
+
+        function updateTimer(seconds) {
+            if (currentState === 'question') {
+                // Update main timer during questions
+                const timerDiv = document.getElementById('timer');
+                timerDiv.textContent = seconds + 's';
+                
+                if (seconds <= 5) {
+                    timerDiv.classList.add('warning');
+                    // Play tick sound for last 5 seconds
+                    playTick();
+                } else {
+                    timerDiv.classList.remove('warning');
+                }
+            } else if (currentState === 'answer') {
+                // Update next question timer during answer reveal
+                const nextTimerDiv = document.getElementById('next-question-timer');
+                if (nextTimerDiv) {
+                    nextTimerDiv.textContent = seconds;
+                    if (seconds <= 3) {
+                        nextTimerDiv.style.color = '#ff6b6b';
+                        // Play tick sound for last 3 seconds
+                        playTick();
+                    } else {
+                        nextTimerDiv.style.color = '#667eea';
+                    }
+                }
+            }
+        }
+
+        function showAnswerResults(data) {
+            currentState = 'answer';
+            
+            // Play reveal sound
+            playReveal();
+            
+            document.getElementById('question-display').classList.add('hidden');
+            document.getElementById('answer-results').classList.remove('hidden');
+            document.getElementById('timer').style.display = 'none';
+            
+            // Update the timer label based on whether this is the final question
+            const isFinalQuestion = currentQuestionNumber >= totalQuestions;
+            const labelElement = document.getElementById('next-question-label');
+            if (labelElement) {
+                labelElement.textContent = isFinalQuestion ? 'Final results in:' : 'Next question in:';
+            }
+            
+            const resultsList = document.getElementById('results-list');
+            resultsList.innerHTML = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h3 style="color: #51cf66; font-size: 2em;">✓ Correct Answer: ${data.correct_answer}</h3>
+                </div>
+            `;
+            
+            data.participants.forEach(p => {
+                const resultItem = document.createElement('div');
+                resultItem.className = `result-item ${p.is_correct ? 'answered' : 'not-answered'}`;
+                const initials = getInitials(p.name);
+                
+                // Try to find the participant ID from our map
+                const pId = Object.keys(participantIdToName).find(id => participantIdToName[id].name === p.name);
+                const color = pId ? getAvatarColor(pId) : avatarColors[0];
+                const isCurrentUser = p.name === participantName;
+                
+                // Update current user's streak
+                if (isCurrentUser) {
+                    currentStreak = p.streak || 0;
+                }
+                
+                // Build streak display
+                let streakDisplay = '';
+                if (p.streak > 0) {
+                    streakDisplay = `<span style="color: #ff6b6b; margin-left: 8px;">🔥 ${p.streak} streak</span>`;
+                }
+                
+                let bonusDisplay = '';
+                if (p.streak_bonus > 0) {
+                    bonusDisplay = `<span style="color: #ffd93d; margin-left: 8px;">+${p.streak_bonus} bonus!</span>`;
+                }
+                
+                resultItem.innerHTML = `
+                    <div class="result-avatar" style="background: ${color.bg}; color: ${color.text};">${initials}</div>
+                    <div class="result-info">
+                        <div>
+                            <strong>${p.name}</strong>
+                            ${isCurrentUser ? '<span style="color: #667eea; margin-left: 8px;">(You)</span>' : ''}
+                            ${streakDisplay}
+                        </div>
+                        <div style="color: #666; font-size: 0.95em; margin-top: 4px;">
+                            ${p.answer || 'No answer'}
+                            ${p.is_correct ? ' ✓' : ' ✗'}
+                            ${bonusDisplay}
+                        </div>
+                    </div>
+                    <div class="score">Score: ${p.score}</div>
+                `;
+                resultsList.appendChild(resultItem);
+            });
+        }
+
+        function showFinalResults(data) {
+            currentState = 'finished';
+            
+            // Play win jingle for final results
+            playWin();
+            
+            document.getElementById('answer-results').classList.add('hidden');
+            document.getElementById('final-leaderboard').classList.remove('hidden');
+            
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = '';
+            
+            data.leaderboard.forEach((p, index) => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                const initials = getInitials(p.name);
+                
+                // Try to find the participant ID from our map
+                const pId = Object.keys(participantIdToName).find(id => participantIdToName[id].name === p.name);
+                const color = pId ? getAvatarColor(pId) : avatarColors[0];
+                const isCurrentUser = p.name === participantName;
+                
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span class="rank">#${index + 1}</span>
+                        <div class="result-avatar" style="background: ${color.bg}; color: ${color.text};">${initials}</div>
+                        <span>${p.name}</span>
+                        ${isCurrentUser ? '<span style="opacity: 0.8;">(You)</span>' : ''}
+                    </div>
+                    <div class="score">${p.score} points</div>
+                `;
+                leaderboard.appendChild(item);
+            });
+        }
+
+        async function startQuiz() {
+            try {
+                await fetch(`/api/quiz/${quizCode}/start`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        participant_id: participantId
+                    })
+                });
+                document.getElementById('start-button').style.display = 'none';
+            } catch (error) {
+                console.error('Error starting quiz:', error);
+            }
+        }
+
+        async function copyLink() {
+            const quizUrl = window.location.origin + '/quiz/' + quizCode;
+            try {
+                await navigator.clipboard.writeText(quizUrl);
+                const successMsg = document.getElementById('copySuccess');
+                successMsg.classList.add('show');
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    successMsg.classList.remove('show');
+                }, 3000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = quizUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const successMsg = document.getElementById('copySuccess');
+                    successMsg.classList.add('show');
+                    setTimeout(() => {
+                        successMsg.classList.remove('show');
+                    }, 3000);
+                } catch (err) {
+                    alert('Failed to copy link');
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // Start polling for quiz state updates (used in waiting room)
+        function startPolling() {
+            if (pollingInterval) return; // Already polling
+            
+            console.log('Starting polling for quiz state updates');
+            pollingInterval = setInterval(() => {
+                if (currentState === 'waiting') {
+                    fetchQuizState();
+                }
+            }, 3000); // Poll every 3 seconds
+        }
+
+        // Stop polling (when quiz starts)
+        function stopPolling() {
+            if (pollingInterval) {
+                console.log('Stopping polling');
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+
+        // Toggle sound effects
+        function toggleSound() {
+            soundsEnabled = !soundsEnabled;
+            const btn = document.getElementById('sound-toggle');
+            if (soundsEnabled) {
+                btn.textContent = '🔊';
+                btn.classList.remove('muted');
+                btn.title = 'Sound on - Click to mute';
+            } else {
+                btn.textContent = '🔇';
+                btn.classList.add('muted');
+                btn.title = 'Sound off - Click to unmute';
+            }
+        }
+
+        // Initialize
+        if (participantId) {
+            // Populate the share link
+            const quizUrl = window.location.origin + '/quiz/' + quizCode;
+            document.getElementById('quizLink').textContent = quizUrl;
+            
+            // Fetch initial state immediately (don't wait for WebSocket)
+            fetchQuizState();
+            
+            // Start polling while in waiting room
+            startPolling();
+            
+            // Then connect to WebSocket for real-time updates
+            connect();
+            
+            // Set up start button handler (visibility controlled by fetchQuizState)
+            document.getElementById('start-button').onclick = startQuiz;
+        } else {
+            window.location.href = `/quiz/${quizCode}`;
+        }
+    </script>
+</body>
+</html>

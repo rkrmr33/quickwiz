@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Quiz - {{.Title}}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .quiz-code {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 20px 0;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .error {
+            color: #721c24;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .share-section {
+            background: #f0f7ff;
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        .share-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .share-link-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .share-link {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            color: #667eea;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .copy-button {
+            width: auto;
+            padding: 12px 24px;
+            font-size: 0.95em;
+        }
+        .copy-success {
+            color: #51cf66;
+            font-size: 0.9em;
+            margin-top: 8px;
+            display: none;
+        }
+        .copy-success.show {
+            display: block;
+        }
+        .home-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+        .home-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="home-button">🎯 QuicKwiz</a>
+    <div class="container">
+        <h1>🎯 {{.Title}}</h1>
+        <div class="quiz-code">Quiz Code: {{.Code}}</div>
+        
+        <div class="share-section">
+            <h3>📤 Share this quiz</h3>
+            <p style="color: #666; font-size: 0.95em; margin-bottom: 10px;">
+                Share this link with other participants to join:
+            </p>
+            <div class="share-link-container">
+                <div class="share-link" id="quizLink"></div>
+                <button class="copy-button" onclick="copyLink()">📋 Copy</button>
+            </div>
+            <div class="copy-success" id="copySuccess">✓ Link copied to clipboard!</div>
+        </div>
+        
+        <p style="margin-bottom: 30px; color: #666;">Enter your name to join</p>
+        
+        <div id="join-form">
+            <input type="text" id="name" placeholder="Your name" required autofocus>
+            <button onclick="joinQuiz()">Join Quiz 🚀</button>
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        const quizCode = '{{.Code}}';
+        const quizUrl = window.location.href;
+        
+        // Populate the share link
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('quizLink').textContent = quizUrl;
+        });
+        
+        async function copyLink() {
+            try {
+                await navigator.clipboard.writeText(quizUrl);
+                const successMsg = document.getElementById('copySuccess');
+                successMsg.classList.add('show');
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    successMsg.classList.remove('show');
+                }, 3000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = quizUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const successMsg = document.getElementById('copySuccess');
+                    successMsg.classList.add('show');
+                    setTimeout(() => {
+                        successMsg.classList.remove('show');
+                    }, 3000);
+                } catch (err) {
+                    alert('Failed to copy link');
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+        
+        async function joinQuiz() {
+            const name = document.getElementById('name').value.trim();
+            const errorDiv = document.getElementById('error');
+            
+            if (!name) {
+                errorDiv.textContent = 'Please enter your name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/quiz/${quizCode}/join`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error);
+                }
+                
+                const data = await response.json();
+                
+                // Redirect to quiz page with participant ID in URL
+                window.location.href = `/quiz/${quizCode}/play/${data.participant_id}`;
+                
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('name').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                joinQuiz();
+            }
+        });
+    </script>
+</body>
+</html>
