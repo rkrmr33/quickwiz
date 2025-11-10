@@ -379,6 +379,7 @@
             
             <div id="participants-list" class="participants-list"></div>
             <button id="start-button" class="start-button" style="display: none;">Start Quiz</button>
+            <div id="countdown-display" style="display: none; font-size: 4em; font-weight: bold; color: #667eea; margin-top: 30px; text-align: center;">3</div>
         </div>
 
         <!-- Question Display -->
@@ -475,15 +476,36 @@
             document.addEventListener(event, unlockAudio, { once: true, passive: true });
         });
 
-        function playTick() {
+        // Re-unlock audio when page becomes visible (iOS suspension fix)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && audioContext.state === 'suspended') {
+                console.log('Page visible again, resuming audio context');
+                ensureAudioContext();
+            }
+        });
+
+        // Helper to ensure AudioContext is running (iOS fix)
+        async function ensureAudioContext() {
+            if (audioContext.state === 'suspended') {
+                try {
+                    await audioContext.resume();
+                    console.log('AudioContext resumed from suspended state');
+                } catch (err) {
+                    console.error('Failed to resume AudioContext:', err);
+                }
+            }
+        }
+
+        function playTick(isLast) {
             if (!soundsEnabled) return;
+            ensureAudioContext(); // Ensure context is running
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            oscillator.frequency.value = 800;
+            oscillator.frequency.value = isLast ? 1600 : 800;
             oscillator.type = 'sine';
             
             gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
@@ -493,16 +515,17 @@
             oscillator.stop(audioContext.currentTime + 0.1);
         }
 
-        function playClick() {
+        function playSelection(isYou) {
             if (!soundsEnabled) return;
+            ensureAudioContext(); // Ensure context is running
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 600;
-            oscillator.type = 'sine';
+
+            oscillator.frequency.value = isYou ? 600 : 400;
+            oscillator.type = isYou ? 'sine' : 'triangle';
             
             gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
@@ -513,6 +536,7 @@
 
         function playReveal() {
             if (!soundsEnabled) return;
+            ensureAudioContext(); // Ensure context is running
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -532,6 +556,7 @@
 
         function playJoin() {
             if (!soundsEnabled) return;
+            ensureAudioContext(); // Ensure context is running
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -549,10 +574,33 @@
             oscillator.stop(audioContext.currentTime + 0.2);
         }
 
+        function playCountdown(isLast = false) {
+            if (!soundsEnabled) return;
+            ensureAudioContext(); // Ensure context is running
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Higher pitch for last beep
+            oscillator.frequency.value = isLast ? 1600 : 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+        }
+
         function playWin() {
             if (!soundsEnabled) return;
             
             console.log('Attempting to play win sound, unlocked:', audioUnlocked);
+            
+            // Ensure AudioContext is running (iOS fix)
+            ensureAudioContext();
             
             // Ensure audio is unlocked first
             if (!audioUnlocked) {
@@ -720,6 +768,9 @@
                 case 'participant_joined':
                     updateParticipantsList(message.payload);
                     break;
+                case 'countdown':
+                    showCountdown(message.payload.count);
+                    break;
                 case 'question':
                     showQuestion(message.payload);
                     break;
@@ -744,6 +795,9 @@
             const counterEl = document.getElementById('answer-counter');
             if (counterEl) {
                 counterEl.textContent = `${data.answered_count} / ${data.total_participants} answered`;
+                if (data.participant_id !== participantId) {
+                    playSelection(false);
+                }
             }
         }
 
@@ -784,6 +838,30 @@
             const subtitle = waitingRoom.querySelector('p');
             if (subtitle) {
                 subtitle.textContent = `${data.participant_count} participant${data.participant_count !== 1 ? 's' : ''} in the room`;
+            }
+        }
+
+        function showCountdown(count) {
+            const countdownDisplay = document.getElementById('countdown-display');
+            const startButton = document.getElementById('start-button');
+            
+            // Hide start button and show countdown on first count
+            if (count === 3) {
+                startButton.style.display = 'none';
+                countdownDisplay.style.display = 'block';
+                countdownDisplay.style.color = '#667eea';
+                // Stop polling immediately when countdown starts
+                stopPolling();
+            }
+            
+            if (count > 0) {
+                countdownDisplay.textContent = count;
+                playCountdown(false);
+            } else {
+                // count === 0 means "GO!"
+                countdownDisplay.textContent = 'GO!';
+                countdownDisplay.style.color = '#51cf66';
+                playCountdown(true);
             }
         }
 
@@ -853,7 +931,7 @@
             if (hasAnswered) return;
             
             // Play click sound
-            playClick();
+            playSelection(true);
             
             // Remove previous selection
             document.querySelectorAll('.option').forEach(opt => {
@@ -902,7 +980,7 @@
                 if (seconds <= 5) {
                     timerDiv.classList.add('warning');
                     // Play tick sound for last 5 seconds
-                    playTick();
+                    playTick(seconds === 0);
                 } else {
                     timerDiv.classList.remove('warning');
                 }
@@ -914,7 +992,7 @@
                     if (seconds <= 3) {
                         nextTimerDiv.style.color = '#ff6b6b';
                         // Play tick sound for last 3 seconds
-                        playTick();
+                        playTick(seconds === 0);
                     } else {
                         nextTimerDiv.style.color = '#667eea';
                     }
@@ -1058,6 +1136,7 @@
         }
 
         async function startQuiz() {
+            // Call the API to start the quiz - countdown will be broadcast to all participants via WebSocket
             try {
                 await fetch(`/api/quiz/${quizCode}/start`, {
                     method: 'POST',
@@ -1068,7 +1147,6 @@
                         participant_id: participantId
                     })
                 });
-                document.getElementById('start-button').style.display = 'none';
             } catch (error) {
                 console.error('Error starting quiz:', error);
             }
@@ -1147,6 +1225,9 @@
             // Populate the share link
             const quizUrl = window.location.origin + '/quiz/' + quizCode;
             document.getElementById('quizLink').textContent = quizUrl;
+
+            // Play join sound for yourself
+            playJoin();
             
             // Fetch initial state immediately (don't wait for WebSocket)
             fetchQuizState();
