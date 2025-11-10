@@ -213,6 +213,7 @@
             font-weight: bold;
             margin: 20px 0;
             letter-spacing: 3px;
+            text-transform: uppercase;
         }
         .quiz-link {
             margin-top: 10px;
@@ -361,7 +362,7 @@
         <div class="join-section">
             <h2>🎮 Join a Quiz</h2>
             <div class="join-input-group">
-                <input type="text" id="quizCode" placeholder="Enter quiz code..." maxlength="8">
+                <input type="text" id="quizCode" placeholder="Enter quiz code..." maxlength="6" style="text-transform: uppercase;">
                 <button id="joinBtn" onclick="joinQuiz()">Join</button>
             </div>
             <div id="joinError"></div>
@@ -532,21 +533,24 @@ quickest_answer_bonus: true
                 return;
             }
 
-            if (code.length !== 8) {
-                showJoinError('Quiz code must be 8 characters');
+            if (code.length !== 6) {
+                showJoinError('Quiz code must be 6 characters');
                 return;
             }
             
             button.disabled = true;
             button.textContent = 'Joining...';
             
+            // Convert to lowercase for URL
+            const lowercaseCode = code.toLowerCase();
+            
             try {
                 // Validate the quiz exists by fetching its info
-                const response = await fetch('/api/quiz/' + code);
+                const response = await fetch('/api/quiz/' + lowercaseCode);
                 
                 if (response.ok) {
                     // Quiz exists, redirect to it
-                    window.location.href = '/quiz/' + code;
+                    window.location.href = '/quiz/' + lowercaseCode;
                 } else if (response.status === 404) {
                     showJoinError('Quiz not found. Please check the code and try again.');
                     button.disabled = false;

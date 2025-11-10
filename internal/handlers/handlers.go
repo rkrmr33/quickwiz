@@ -333,8 +333,8 @@ func (h *Handler) StartQuizHandler(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("StartQuiz quiz started successfully", "code", code, "creator_id", req.ParticipantID)
 
-	// Start question timer
-	go h.runQuestionTimer(code)
+	// Start countdown and then question timer
+	go h.runCountdownAndStart(code)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -379,6 +379,7 @@ func (h *Handler) SubmitAnswerHandler(w http.ResponseWriter, r *http.Request) {
 	h.broadcast(code, models.WebSocketMessage{
 		Type: "answer_count_update",
 		Payload: models.AnswerCountUpdate{
+			ParticipantID:     req.ParticipantID,
 			AnsweredCount:     answeredCount,
 			TotalParticipants: totalParticipants,
 		},
@@ -447,6 +448,31 @@ func (h *Handler) WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helper methods
+
+func (h *Handler) runCountdownAndStart(code string) {
+	// Countdown from 3 to 1
+	for i := 3; i >= 1; i-- {
+		h.broadcast(code, models.WebSocketMessage{
+			Type: "countdown",
+			Payload: map[string]int{
+				"count": i,
+			},
+		})
+		time.Sleep(1 * time.Second)
+	}
+
+	// Send "GO!" signal
+	h.broadcast(code, models.WebSocketMessage{
+		Type: "countdown",
+		Payload: map[string]int{
+			"count": 0,
+		},
+	})
+	time.Sleep(500 * time.Millisecond)
+
+	// Now start the actual quiz
+	h.runQuestionTimer(code)
+}
 
 func (h *Handler) runQuestionTimer(code string) {
 	session, err := h.quizManager.GetSession(code)
@@ -603,5 +629,5 @@ func generateParticipantID() string {
 }
 
 func cleanCode(s string) string {
-	return strings.TrimSpace(strings.ToUpper(s))
+	return strings.TrimSpace(strings.ToLower(s))
 }

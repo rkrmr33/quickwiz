@@ -105,6 +105,7 @@ type QuizFinished struct {
 
 // AnswerCountUpdate sent when someone submits an answer
 type AnswerCountUpdate struct {
-	AnsweredCount     int `json:"answered_count"`
-	TotalParticipants int `json:"total_participants"`
+	ParticipantID     string `json:"participant_id"`
+	AnsweredCount     int    `json:"answered_count"`
+	TotalParticipants int    `json:"total_participants"`
 }

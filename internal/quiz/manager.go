@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -372,11 +371,11 @@ func (m *Manager) CleanupOldSessions() {
 	}
 }
 
-// generateCode generates a random 8-character
+// generateCode generates a random 6-character code (lowercase for URLs)
 func generateCode() string {
-	bytes := make([]byte, 4)
+	bytes := make([]byte, 3)
 	rand.Read(bytes)
-	return strings.ToUpper(hex.EncodeToString(bytes))
+	return hex.EncodeToString(bytes) // lowercase for URLs
 }
 
 // calculateStreakBonus calculates bonus points based on current streak
